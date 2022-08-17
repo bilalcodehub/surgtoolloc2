@@ -132,6 +132,7 @@ _release
 *.zip
 models/cls
 data/video_clips
+data/models
 data/train_images
 data/train_images_c
 data/train_images_small
