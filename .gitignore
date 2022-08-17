@@ -127,3 +127,21 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+_release
+*.zip
+models/cls
+data/video_clips
+data/models
+data/train_images
+data/train_images_c
+data/train_images_small
+data/train_images_tiny
+data/train_images_tiny_crop
+data/segmentation
+login.py
+m1-multitarget.pkl
+06_archs-small-ensemble-tta_res.pkl
+tta_res.pkl
+tta_res_large.pkl
+surgtoolloc2022-category-1
