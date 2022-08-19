@@ -13,7 +13,7 @@ Video Clips:
 All the training video clips for this dataset are under the folder "video_clips". The dataset consists of video clips taken from surgical training exercises using the da Vinci robotic system. During these exercises the surgical trainees are performing standard activities such as dissecting tissue, suturing, etc. 
 There are 24,695 video clips, each 30 seconds long and captured at 30fps with a resolution of 720p (1280 x 720) from one channel of the endoscope. For the extent of each clip, there are three tools installed and within the surgical field, although for some clips tools may be obscured or otherwise temporarily not visible. Each clip can contains three of the following 14 possible tools:
 
-	1. 'bipolar dissector'
+	1. 'bipolar dissector''
 	2.'bipolar forceps'
 	3. 'cadiere forceps'
 	4. 'clip applier '

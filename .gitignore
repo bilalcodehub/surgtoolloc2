@@ -130,17 +130,9 @@ dmypy.json
 
 _release
 *.zip
-models/cls
 data/video_clips
-data/models
 data/train_images_orig
 data/train_images_crop
 data/segmentation
-login.py
-m1-multitarget.pkl
-06_archs-small-ensemble-tta_res.pkl
-tta_res.pkl
-tta_res_large.pkl
 .ipynb_checkpoints
-__pycache__
 
