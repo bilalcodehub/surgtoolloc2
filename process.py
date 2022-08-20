@@ -49,6 +49,10 @@ class UniqueVideoValidator(DataFrameValidator):
 # %% 09_inference.ipynb 9
 class Surgtoolloc_det(DetectionAlgorithm):
     def __init__(self):
+        
+        print(' ')
+        print('TeamZERO prediction engine has started!.')
+
         super().__init__(
             index_key='input_video',
             file_loaders={'input_video': VideoLoader()},
@@ -58,10 +62,16 @@ class Surgtoolloc_det(DetectionAlgorithm):
             validators=dict(input_video=(UniquePathIndicesValidator(),)),
         )
         # loading ensemble learner
+        print('-Loading key artefacts...')
+
         ensem_path=Path('/opt/algorithm/models/cls') if execute_in_docker else Path("test/algorithm/cls")
         segmen_path=Path('/opt/algorithm/models/seg') if execute_in_docker else Path("test/algorithm/seg")
+
         self.ensem_learner=[load_learner(m, cpu=False) for m in ensem_path.ls() if m.suffix=='.pkl']
+        print(f'-{len(self.ensem_learner)} mutli-class classification models have been detected & loaded.')
+
         self.crop_learner=load_learner(segmen_path/'seg_v1.pkl', cpu=False)
+        print('-Segmntation model for image cropping is also loaded!.')
 
         self.tool_list = ["needle_driver",
                           "monopolar_curved_scissor",
@@ -77,10 +87,14 @@ class Surgtoolloc_det(DetectionAlgorithm):
                           "stapler",
                           "permanent_cautery_hook_spatula",
                           "grasping_retractor"]
+        print('-Tools dictionary loaded!.')
+        print(' ')
+
     
     def crop_images(self, src):
         fs=get_image_files(src)
-        print(f'{len(fs)} images in the {self._input_path} are found')
+        print(f'-Image cropping begun for {len(fs)} images...')
+
         preds,_ = self.crop_learner.get_preds(dl=self.crop_learner.dls.test_dl(fs))
         for p, f in zip(preds,self.crop_learner.dl.items):
 
@@ -98,8 +112,11 @@ class Surgtoolloc_det(DetectionAlgorithm):
             im_c = PILImage.create(np.array(im)[x1:y1,x2:y2])
             im_c.save(src/fn)
     
+        print(f'--{len(get_image_files(src))} images have been croppped. Cropping done!.')
+        
     def extract_images(self, video_file):     
-    
+        
+        print('-Image extraction started..')
         # start the loop
         count = 0
         src=Path(self._input_path)
@@ -114,11 +131,12 @@ class Surgtoolloc_det(DetectionAlgorithm):
             if not is_read:
                 # break out of the loop if there are no frames to read
                 break
-            name = str(src/f'{count}.jpg')
+            name = str(src/f'im_{count}.jpg')
             cv2.imwrite(name,f)
             count+=1
         cap.release()
-
+        print(f'--{len(get_image_files(src))} images from {video_file} are extracted in {src} folder. Extraction done!.')
+        
     def tool_detect_json_sample(self):
         # single output dict
         slice_dict = {"slice_nr": 1}
@@ -151,15 +169,19 @@ class Surgtoolloc_det(DetectionAlgorithm):
         tools -> list of prediction dictionaries (per frame) in the correct format as described in documentation 
         """
         
-        print('Loading, extracting and cropping video file: ' + str(fname))
+        print(f'Processing the video file: {str(fname)} through TeamZERO prediction engine')
+        print(f' ')
         self.extract_images(fname)
+        print(' ')
+
         self.crop_images(self._input_path)
 
         fs=get_image_files(self._input_path)
         
         num_frames = len(fs)
         
-        print(num_frames)
+        print(' ')
+        print(f'-Tools presence detection started.')
 
         # generate output json
         all_frames_predicted_outputs = []
@@ -172,6 +194,7 @@ class Surgtoolloc_det(DetectionAlgorithm):
             if len(prs_items)<1:
                 prs_items=learn.dl.items
 
+        print(f'--Predictions from all models in the ensemble learner are obtained!.')
         tta_prs=first(zip(*tta_res))
         tta_prs+=tta_prs[:1]
         tta_prs=torch.stack(tta_prs)
@@ -185,7 +208,7 @@ class Surgtoolloc_det(DetectionAlgorithm):
 
         for usm1,usm2,usm3,usm4,f in zip(lbls[0],lbls[1],lbls[2],lbls[3],prs_items):
             frame_dict=self.tool_detect_json_sample()
-            frame_dict['slice_nr']=int(f.stem)
+            frame_dict['slice_nr']=int(f.stem.replace("im_",""))
             frame_dict[usm1]=True if usm1 in frame_dict.keys() else all_undefined_tools.append(usm1)
             frame_dict[usm2]=True if usm2 in frame_dict.keys() else all_undefined_tools.append(usm2)
             frame_dict[usm3]=True if usm3 in frame_dict.keys() else all_undefined_tools.append(usm3)
@@ -194,10 +217,19 @@ class Surgtoolloc_det(DetectionAlgorithm):
             frame_dict.pop("blank", None)
             frame_dict.pop("out_of_view", None)
             all_frames_predicted_outputs.append(frame_dict) 
-
-        print(f'List of undefined tools: {set(all_undefined_tools)}.')
+        
+        print(f'--Translation of class probabilities to tool labels is done!.')
+        
+        print(f'--Following tools remained unaccounted for: {set(all_undefined_tools)}. Please ensure if it is OK to skip these tools from the output.')
         tools=sorted(all_frames_predicted_outputs, key=lambda d: d['slice_nr']) 
 
+        print(f'--Output JSON file generated & returned!.')
+        
+        print(' ')
+        
+        print(f'{fname} has been successfully processed!.')
+        
+        print(' ')
         return tools
 
 # %% 09_inference.ipynb 12
