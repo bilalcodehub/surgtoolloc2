@@ -133,6 +133,7 @@ _release
 data/video_clips
 data/train_images_orig
 data/train_images_crop
+data/train_images_crop-old
 data/segmentation
 .ipynb_checkpoints
 
