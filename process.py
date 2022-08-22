@@ -119,7 +119,7 @@ class Surgtoolloc_det(DetectionAlgorithm):
         print('-Image extraction started..')
         # start the loop
         count = 0
-        src=Path(self._input_path)
+        src=Path('/images')
         
         for i in get_image_files(src): os.remove(i) 
         
@@ -131,7 +131,7 @@ class Surgtoolloc_det(DetectionAlgorithm):
             if not is_read:
                 # break out of the loop if there are no frames to read
                 break
-            name = str(src/f'im_{count}.jpg')
+            name = str(src/f'im_{count}.png')
             cv2.imwrite(name,f)
             count+=1
         cap.release()
@@ -174,9 +174,10 @@ class Surgtoolloc_det(DetectionAlgorithm):
         self.extract_images(fname)
         print(' ')
 
-        self.crop_images(self._input_path)
+        images_dir = Path('/images')
+        self.crop_images(images_dir)
 
-        fs=get_image_files(self._input_path)
+        fs=get_image_files(images_dir)
         
         num_frames = len(fs)
         
@@ -232,6 +233,6 @@ class Surgtoolloc_det(DetectionAlgorithm):
         print(' ')
         return tools
 
-# %% 09_inference.ipynb 12
+# %% 09_inference.ipynb 13
 if __name__ == "__main__":
     Surgtoolloc_det().process()
