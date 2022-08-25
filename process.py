@@ -65,13 +65,9 @@ class Surgtoolloc_det(DetectionAlgorithm):
         print('-Loading key artefacts...')
 
         ensem_path=Path('/opt/algorithm/models/cls') if execute_in_docker else Path("test/algorithm/cls")
-        # segmen_path=Path('/opt/algorithm/models/seg') if execute_in_docker else Path("test/algorithm/seg")
 
         self.ensem_learner=[load_learner(m, cpu=False) for m in ensem_path.ls() if m.suffix=='.pkl']
         print(f'-{len(self.ensem_learner)} mutli-class classification models have been detected & loaded.')
-
-        # self.crop_learner=load_learner(segmen_path/'seg_v1.pkl', cpu=False)
-        # print('-Segmntation model for image cropping is also loaded!.')
 
         self.tool_list = ["needle_driver",
                           "monopolar_curved_scissor",
@@ -89,42 +85,17 @@ class Surgtoolloc_det(DetectionAlgorithm):
                           "grasping_retractor"]
         print('-Tools dictionary loaded!.')
         print(' ')
-
-    
-#     def crop_images(self, src):
-#         fs=get_image_files(src)
-#         print(f'-Image cropping begun for {len(fs)} images...')
-
-#         preds,_ = self.crop_learner.get_preds(dl=self.crop_learner.dls.test_dl(fs))
-#         for p, f in zip(preds,self.crop_learner.dl.items):
-
-#             fn = f.name
-
-#             im=PILImage.create(f)
-#             (h,w)=im.shape
-#             mask=PILMask.create((np.array(p.argmax(0))*255).astype(np.uint8))
-#             mask=Resize((h,w), ResizeMethod.Squish) (mask)
-
-#             lbl = label(np.array(mask))
-#             props = regionprops(lbl)
-#             x1,y1,x2,y2=props[0].bbox[0],props[0].bbox[2],props[0].bbox[1],props[0].bbox[3]
-
-#             im_c = PILImage.create(np.array(im)[x1:y1,x2:y2])
-#             im_c.save(src/fn)
-    
-#         print(f'--{len(get_image_files(src))} images have been croppped. Cropping done!.')
         
     def extract_images(self, video_file):     
         
         print('-Image extraction started..')
         # start the loop
         count = 0
-        src=Path('/images') if execute_in_docker else Path("./test/input/")
-        
+        src=Path('/images') if execute_in_docker else Path("./test/images/")
         for i in get_image_files(src): os.remove(i) 
         
         # read the video file    
-        cap = cv2.VideoCapture(str(src/video_file))
+        cap = cv2.VideoCapture(str(self._input_path/Path(video_file).name))
         
         while True:
             is_read, f = cap.read()
@@ -174,15 +145,13 @@ class Surgtoolloc_det(DetectionAlgorithm):
         self.extract_images(fname)
         print(' ')
 
-        images_dir = Path('/images') if execute_in_docker else Path("./test/input/")
-        # self.crop_images(images_dir)
-
+        images_dir = Path('/images') if execute_in_docker else Path("./test/images/")
         fs=get_image_files(images_dir)
         
         num_frames = len(fs)
         
         print(' ')
-        print(f'-Tools presence detection started.')
+        print(f'-Tools presence detection task started.')
 
         # generate output json
         all_frames_predicted_outputs = []
@@ -192,9 +161,7 @@ class Surgtoolloc_det(DetectionAlgorithm):
         prs_items=[]
         for learn in self.ensem_learner:
             # learn.dls.batch_size=32
-            print('Before1: '+str(learn.dls.bs))
             learn.dls.bs=32
-            print('After: '+str(learn.dls.bs))
             tta_res.append(learn.tta(dl=learn.dls.test_dl(fs)))
             if len(prs_items)<1:
                 prs_items=learn.dl.items
@@ -237,6 +204,6 @@ class Surgtoolloc_det(DetectionAlgorithm):
         print(' ')
         return tools
 
-# %% 09_inference.ipynb 13
+# %% 09_inference.ipynb 11
 if __name__ == "__main__":
     Surgtoolloc_det().process()
