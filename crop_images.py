@@ -43,7 +43,8 @@ def main():
     fsdelta =  L(fssrc - fsdst)
     
     fs = L([src/f for f in fsdelta])
-
+    
+    print(f'{len(fs)} to crop...')
     # creating bunches for processing images
     bunches = [i for i in range(len(fs)) if i%50000==0]
 
